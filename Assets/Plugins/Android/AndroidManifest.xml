@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+	<!-- Internet permission -->
+	<uses-permission android:name="android.permission.INTERNET" />
+
+	<!-- ==================== BLUETOOTH LE PERMISSIONS ==================== -->
+
+	<!-- Legacy Bluetooth permissions (Android 4.4 - Android 11) -->
+	<uses-permission android:name="android.permission.BLUETOOTH"
+        android:maxSdkVersion="30" />
+	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"
+        android:maxSdkVersion="30" />
+
+	<!-- Modern Bluetooth permissions (Android 12+, including Android 16) -->
+	<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+	<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+	<uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+
+	<!-- ==================== LOCATION PERMISSIONS ==================== -->
+
+	<!-- Foreground location - Required for BLE scanning on all Android versions -->
+	<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+	<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+	<!-- Background location - Required if scanning BLE from background service -->
+	<uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
+	<!-- ==================== HARDWARE FEATURES ==================== -->
+
+	<!-- Declare BLE hardware requirement -->
+	<uses-feature
+        android:name="android.hardware.bluetooth_le"
+        android:required="true" />
+
+	<!-- Declare Bluetooth hardware -->
+	<uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="true" />
+
+	<!-- Declare location hardware (optional, set to false if not core to your app) -->
+	<uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+	<uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+
+	<application>
+		<!--Used when Application Entry is set to Activity, otherwise remove this activity block-->
+		<activity android:name="com.unity3d.player.UnityPlayerActivity"
+                  android:theme="@style/UnityThemeSelector"
+                  android:exported="true"
+                  android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+			<meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+		</activity>
+		<!--Used when Application Entry is set to GameActivity, otherwise remove this activity block-->
+		<activity android:name="com.unity3d.player.UnityPlayerGameActivity"
+                  android:theme="@style/BaseUnityGameActivityTheme"
+                  android:exported="true"
+                  android:configChanges="mcc|mnc|locale|touchscreen|keyboard|keyboardHidden|navigation|orientation|screenLayout|uiMode|screenSize|smallestScreenSize|fontScale|layoutDirection|density">
+			<intent-filter>
+				<action android:name="android.intent.action.MAIN" />
+				<category android:name="android.intent.category.LAUNCHER" />
+			</intent-filter>
+			<meta-data android:name="unityplayer.UnityActivity" android:value="true" />
+			<meta-data android:name="android.app.lib_name" android:value="game" />
+		</activity>
+	</application>
+</manifest>
