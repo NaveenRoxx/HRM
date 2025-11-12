@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using UnityEngine.Android;
 using TMPro;
+
 public class MobileBluetoothTest : MonoBehaviour
 {
     [Header("UI Elements")]
@@ -23,12 +24,13 @@ public class MobileBluetoothTest : MonoBehaviour
     private bool isConnected = false;
     private int currentHeartRate = 0;
 
-    // Required permissions based on Android version
+    // Updated permissions array with location permissions
     private readonly string[] requiredPermissions = new string[]
     {
         "android.permission.BLUETOOTH_SCAN",
         "android.permission.BLUETOOTH_CONNECT",
-        "android.permission.ACCESS_FINE_LOCATION"
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
     };
 
     void Start()
@@ -55,7 +57,6 @@ public class MobileBluetoothTest : MonoBehaviour
 #if UNITY_ANDROID
         // Check if all permissions are granted
         bool allGranted = true;
-
         foreach (string permission in requiredPermissions)
         {
             if (!Permission.HasUserAuthorizedPermission(permission))
@@ -85,10 +86,8 @@ public class MobileBluetoothTest : MonoBehaviour
     {
 #if UNITY_ANDROID
         statusText.text = "Requesting permissions...";
-
         // Use Unity 6 recommended approach - request all at once
         Permission.RequestUserPermissions(requiredPermissions);
-
         // Check results after a short delay
         StartCoroutine(CheckPermissionsAfterRequest());
 #endif
@@ -123,7 +122,7 @@ public class MobileBluetoothTest : MonoBehaviour
             // Check if we should show rationale
             if (Permission.ShouldShowRequestPermissionRationale(deniedPermission))
             {
-                statusText.text = "Bluetooth permissions are required. Please grant them.";
+                statusText.text = "Bluetooth & Location permissions required. Please grant them.";
                 // Give user option to retry
                 Invoke("RequestPermissions", 2f);
             }
@@ -147,7 +146,7 @@ public class MobileBluetoothTest : MonoBehaviour
 
         BluetoothLEHardwareInterface.Initialize(true, false, () =>
         {
-            statusText.text = "Bluetooth Ready! Tap 'Scan' to find Polar H10.";
+            statusText.text = "Bluetooth Ready! Tap 'Scan' to find Polar H10 devices.";
             scanButton.interactable = true;
             Debug.Log("BLE Initialized Successfully");
         },
@@ -178,7 +177,7 @@ public class MobileBluetoothTest : MonoBehaviour
 
     void StartScan()
     {
-        statusText.text = "Scanning for Polar H10...";
+        statusText.text = "Scanning for Polar H10 devices...";
         isScanning = true;
         scanButton.interactable = false;
         deviceAddress = "";
@@ -190,7 +189,8 @@ public class MobileBluetoothTest : MonoBehaviour
             {
                 Debug.Log($"Found device: {name} ({address})");
 
-                if (name.ToUpper().Contains("POLAR"))
+                // Check if device name contains "Polar H10"
+                if (!string.IsNullOrEmpty(name) && name.Contains("Polar H10"))
                 {
                     statusText.text = $"Found: {name}";
                     deviceAddress = address;
@@ -201,13 +201,14 @@ public class MobileBluetoothTest : MonoBehaviour
                     connectButton.interactable = true;
                     scanButton.interactable = true;
 
-                    Debug.Log($"Polar device found: {name} at {address}");
+                    Debug.Log($"Polar H10 device found: {name} at {address}");
                 }
             },
             null,
             false,
             false);
 
+        // Scan timeout after 15 seconds
         Invoke("StopScanTimeout", 15f);
     }
 
@@ -295,7 +296,7 @@ public class MobileBluetoothTest : MonoBehaviour
             HR_MEASUREMENT,
             (notifyAddress, notifyCharacteristic) =>
             {
-                statusText.text = "Receiving heart rate data...";
+                statusText.text = $"Receiving heart rate from {deviceName}...";
                 isConnected = true;
                 disconnectButton.interactable = true;
                 Debug.Log("Successfully subscribed to heart rate notifications");
@@ -304,8 +305,8 @@ public class MobileBluetoothTest : MonoBehaviour
             {
                 currentHeartRate = ParseHeartRate(data);
                 heartRateText.text = $"HR: {currentHeartRate} BPM";
-
                 Debug.Log($"Heart Rate: {currentHeartRate} BPM");
+
                 CheckHeartRateThresholds(currentHeartRate);
             });
     }
@@ -320,8 +321,8 @@ public class MobileBluetoothTest : MonoBehaviour
 
         byte flags = data[0];
         bool is16bit = (flags & 0x01) != 0;
-
         int heartRate;
+
         if (is16bit)
         {
             heartRate = BitConverter.ToUInt16(data, 1);
@@ -336,21 +337,29 @@ public class MobileBluetoothTest : MonoBehaviour
 
     void CheckHeartRateThresholds(int hr)
     {
-        if (hr > 140)
+        // Trigger different events based on heart rate zones
+        if (hr > 160)
         {
-            Debug.Log("TRIGGER: Heart rate very high!");
+            Debug.Log("TRIGGER: Heart rate VERY HIGH! (>160)");
+            // Add your voice-over trigger here
+        }
+        else if (hr > 140)
+        {
+            Debug.Log("TRIGGER: Heart rate HIGH (>140)");
+            // Add your voice-over trigger here
         }
         else if (hr > 120)
         {
-            Debug.Log("TRIGGER: Heart rate is increasing");
+            Debug.Log("TRIGGER: Heart rate is increasing (>120)");
+            // Add your voice-over trigger here
         }
         else if (hr > 100)
         {
-            Debug.Log("TRIGGER: Heart rate elevated");
+            Debug.Log("TRIGGER: Heart rate elevated (>100)");
         }
         else if (hr < 50 && hr > 0)
         {
-            Debug.Log("TRIGGER: Heart rate is low");
+            Debug.Log("TRIGGER: Heart rate is low (<50)");
         }
     }
 
@@ -413,6 +422,7 @@ public class MobileBluetoothTest : MonoBehaviour
         });
     }
 
+    // Public methods for other scripts to access heart rate data
     public int GetCurrentHeartRate()
     {
         return currentHeartRate;
@@ -422,4 +432,10 @@ public class MobileBluetoothTest : MonoBehaviour
     {
         return isConnected;
     }
+
+    public string GetConnectedDeviceName()
+    {
+        return deviceName;
+    }
 }
+          
